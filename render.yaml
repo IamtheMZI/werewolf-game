@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: werewolf-game
+    runtime: docker
+    repo: https://github.com/IamtheMZI/werewolf-game
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: TZ
+        value: UTC
+    autoDeploy: true
