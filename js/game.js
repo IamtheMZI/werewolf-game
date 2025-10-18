@@ -83,6 +83,24 @@ let isAudioNode = false;
 // AUDIO NARRATOR       //
 // ==================== //
 
+let audioInitialized = false;
+
+// Initialize audio for iOS - requires user interaction
+function initializeAudio() {
+    if (audioInitialized) return;
+
+    try {
+        // iOS requires this to be called from user interaction
+        const utterance = new SpeechSynthesisUtterance('');
+        utterance.volume = 0;  // Silent test
+        speechSynthesis.speak(utterance);
+        audioInitialized = true;
+        console.log('🎙️ Audio initialized for iOS');
+    } catch (error) {
+        console.warn('Audio initialization failed:', error);
+    }
+}
+
 function playNarration(text) {
     // Only play if this player is the audio node
     if (!isAudioNode) return;
@@ -95,11 +113,28 @@ function playNarration(text) {
 
     // Use Web Speech API
     try {
+        // Cancel any ongoing speech
+        speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.pitch = 0.8;  // Lower pitch for authority
         utterance.rate = 0.9;   // Slower for dramatic effect
         utterance.volume = 1.0;
+        utterance.lang = 'en-US';
+
+        // iOS-specific: Resume speech synthesis
+        if (speechSynthesis.paused) {
+            speechSynthesis.resume();
+        }
+
         speechSynthesis.speak(utterance);
+
+        // For iOS: Force resume after a short delay
+        setTimeout(() => {
+            if (speechSynthesis.paused) {
+                speechSynthesis.resume();
+            }
+        }, 100);
     } catch (error) {
         console.error('Audio playback failed:', error);
     }
@@ -243,6 +278,11 @@ function showYourCard() {
     `;
 
     yourCardSection.classList.remove('hidden');
+
+    // Initialize audio on first user interaction (iOS requirement)
+    if (isAudioNode) {
+        initializeAudio();
+    }
 
     showMessage('Memorize your role!', 'info');
 }
