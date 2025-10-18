@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game In Progress - Werewolf</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div class="container game-container">
+        <!-- Game Phase Header -->
+        <header class="game-header">
+            <div class="phase-indicator">
+                <span id="phaseIcon" class="phase-icon">🌙</span>
+                <h1 id="phaseTitle">Night Phase</h1>
+            </div>
+            <div class="game-timer hidden" id="gameTimer">
+                <span class="timer-icon">⏱️</span>
+                <span id="timerDisplay">00:00</span>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <!-- Your Card Display -->
+            <section id="yourCardSection" class="your-card-section">
+                <h2>Your Role</h2>
+                <div class="card-display">
+                    <div id="yourCard" class="role-card" data-role="">
+                        <div class="card-front">
+                            <div class="card-image">
+                                <span class="card-emoji"></span>
+                            </div>
+                            <div class="card-name"></div>
+                            <div class="card-team"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cardDescription" class="card-description"></div>
+            </section>
+
+            <!-- Action Prompt -->
+            <section id="actionPromptSection" class="action-prompt-section hidden">
+                <div class="prompt-card">
+                    <h2 id="promptTitle">Action Required</h2>
+                    <p id="promptText">Follow the instructions below...</p>
+                    <div id="promptTimer" class="prompt-timer hidden">
+                        <span>Time remaining: </span>
+                        <span id="promptTimerValue">30s</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Area (for tapping cards, players, etc.) -->
+            <section id="interactionSection" class="interaction-section hidden">
+                <!-- Player Cards Grid (for selecting players) -->
+                <div id="playerCardsGrid" class="player-cards-grid hidden">
+                    <h3>Select a Player</h3>
+                    <div id="playerCards" class="cards-grid">
+                        <!-- Player cards dynamically generated -->
+                    </div>
+                </div>
+
+                <!-- Center Cards (for Seer, Drunk actions) -->
+                <div id="centerCardsSection" class="center-cards-section hidden">
+                    <h3>Center Cards</h3>
+                    <div id="centerCards" class="center-cards">
+                        <div class="role-card center-card" data-position="0">
+                            <div class="card-back">❓</div>
+                        </div>
+                        <div class="role-card center-card" data-position="1">
+                            <div class="card-back">❓</div>
+                        </div>
+                        <div class="role-card center-card" data-position="2">
+                            <div class="card-back">❓</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div id="actionButtons" class="action-buttons hidden">
+                    <button id="confirmActionBtn" class="btn btn-primary" disabled>Confirm</button>
+                    <button id="skipActionBtn" class="btn btn-secondary">Skip</button>
+                </div>
+            </section>
+
+            <!-- Day Phase Discussion -->
+            <section id="discussionSection" class="discussion-section hidden">
+                <h2>Discussion Time</h2>
+                <p class="discussion-instructions">
+                    Discuss with other players to figure out who the werewolves are!
+                    When time is up, you'll vote to eliminate someone.
+                </p>
+
+                <!-- Night Notes Section -->
+                <div id="nightNotesSection" class="night-notes-section">
+                    <h3>📝 Your Night Notes</h3>
+                    <div id="nightNotesContent" class="night-notes-content">
+                        <!-- Night action results will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="discussion-ready-section">
+                    <button id="doneDiscussionBtn" class="btn btn-primary">
+                        ✅ I'm Ready to Vote
+                    </button>
+                    <div id="readyStatus" class="ready-status">
+                        <p><span id="readyCount">0</span> / <span id="totalPlayers">0</span> players ready</p>
+                    </div>
+                </div>
+
+                <div class="players-alive-list">
+                    <h3>Players</h3>
+                    <div id="playersAliveGrid" class="players-grid">
+                        <!-- Players list -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Voting Section -->
+            <section id="votingSection" class="voting-section hidden">
+                <h2>Cast Your Vote</h2>
+                <p class="voting-instructions">
+                    Vote for the player you think is a werewolf. You cannot change your vote!
+                </p>
+
+                <div id="votingGrid" class="voting-grid">
+                    <!-- Voting options dynamically generated -->
+                </div>
+
+                <div id="votingStatus" class="voting-status">
+                    <p>Waiting for all players to vote...</p>
+                    <div class="vote-progress">
+                        <span id="votesReceived">0</span> / <span id="totalVotes">0</span> votes
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section hidden">
+                <h2>Game Results</h2>
+
+                <div id="eliminatedPlayer" class="eliminated-player">
+                    <!-- Show who was eliminated -->
+                </div>
+
+                <div id="allRoles" class="all-roles-reveal">
+                    <h3>Final Roles</h3>
+                    <div id="finalRolesGrid" class="roles-grid">
+                        <!-- All players' final roles -->
+                    </div>
+                </div>
+
+                <div id="winnerAnnouncement" class="winner-announcement">
+                    <!-- Winner announcement -->
+                </div>
+
+                <div class="results-actions">
+                    <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+                    <button id="leaveLobbyBtn" class="btn btn-secondary">Leave Game</button>
+                </div>
+            </section>
+
+            <!-- Waiting Screen -->
+            <section id="waitingSection" class="waiting-section hidden">
+                <div class="waiting-content">
+                    <div class="spinner"></div>
+                    <h2 id="waitingTitle">Please Wait...</h2>
+                    <p id="waitingText">Other players are completing their actions</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="game-footer">
+            <div class="status-info">
+                <span id="roomCodeDisplay" class="room-code-small">Room: ------</span>
+                <span class="separator">|</span>
+                <span id="playerCountDisplay">Players: 0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Messages -->
+    <div id="messageToast" class="toast hidden"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalText">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="modalConfirmBtn" class="btn btn-primary">Confirm</button>
+                <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/game.js" type="module"></script>
+</body>
+</html>

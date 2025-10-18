@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Online multiplayer Werewolf card game inspired by Jackbox Party Pack">
+    <title>Werewolf - Online Card Game</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <div class="hero-content">
+                <h1 class="game-title">
+                    <span class="wolf-icon">🐺</span>
+                    WEREWOLF
+                    <span class="wolf-icon">🌙</span>
+                </h1>
+                <p class="tagline">One Night Ultimate Werewolf - Online Edition</p>
+                <p class="subtitle">Play with friends. No app download required.</p>
+            </div>
+        </header>
+
+        <main class="main-menu">
+            <div class="menu-card">
+                <h2>Join or Create a Game</h2>
+
+                <div class="menu-options">
+                    <div class="option-card create-game">
+                        <div class="icon">🎮</div>
+                        <h3>Create Game</h3>
+                        <p>Start a new game room and invite friends</p>
+                        <button id="createGameBtn" class="btn btn-primary">Create New Game</button>
+                    </div>
+
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+
+                    <div class="option-card join-game">
+                        <div class="icon">🚪</div>
+                        <h3>Join Game</h3>
+                        <p>Enter a room code to join existing game</p>
+                        <div class="join-form">
+                            <input
+                                type="text"
+                                id="roomCodeInput"
+                                placeholder="Enter Room Code"
+                                maxlength="6"
+                                autocomplete="off"
+                                class="room-code-input"
+                            >
+                            <input
+                                type="text"
+                                id="playerNameInput"
+                                placeholder="Your Name"
+                                maxlength="20"
+                                autocomplete="off"
+                                class="player-name-input"
+                            >
+                            <button id="joinGameBtn" class="btn btn-secondary">Join Game</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>How to Play</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="step-number">1</span>
+                        <p>Create or join a game room with 3-10 players</p>
+                    </div>
+                    <div class="info-item">
+                        <span class="step-number">2</span>
+                        <p>Receive your secret role card</p>
+                    </div>
+                    <div class="info-item">
+                        <span class="step-number">3</span>
+                        <p>Follow night phase prompts to perform role actions</p>
+                    </div>
+                    <div class="info-item">
+                        <span class="step-number">4</span>
+                        <p>Discuss and vote to find the werewolves!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="roles-preview">
+                <h3>Game Roles</h3>
+                <div class="roles-list">
+                    <span class="role-badge werewolf">🐺 Werewolf</span>
+                    <span class="role-badge seer">🔮 Seer</span>
+                    <span class="role-badge robber">🔄 Robber</span>
+                    <span class="role-badge drunk">😴 Drunk</span>
+                    <span class="role-badge insomniac">🧝 Insomniac</span>
+                    <span class="role-badge minion">😈 Minion</span>
+                    <span class="role-badge villager">😇 Villager</span>
+                    <span class="role-badge tanner">🃏 Tanner</span>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Inspired by One Night Ultimate Werewolf by Bezier Games</p>
+            <p class="version">v1.0 | Built for fun with friends</p>
+        </footer>
+    </div>
+
+    <!-- Error/Success Messages -->
+    <div id="messageToast" class="toast hidden"></div>
+
+    <script src="js/main.js" type="module"></script>
+</body>
+</html>

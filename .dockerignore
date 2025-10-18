@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation (optional - remove these lines if you want docs in the image)
+*.md
+!README.md
+
+# Development files
+.vscode
+.idea
+*.log
+*.bak
+*.swp
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node modules (if any)
+node_modules
+npm-debug.log
+
+# Python
+__pycache__
+*.py[cod]
+*.pyc
+.python-version
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore

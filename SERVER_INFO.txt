@@ -1,0 +1,95 @@
+🎮 WEREWOLF GAME SERVER IS RUNNING! 🐺
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📡 ACCESS URLs:
+
+Local (this computer):
+  http://localhost:8000
+  http://127.0.0.1:8000
+
+Local Network (other devices):
+  http://10.0.0.59:8000
+
+Share this with devices on your network! 👆
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TO TEST WITH 8 PLAYERS:
+
+Since the game uses localStorage, here's how to simulate multiple players:
+
+OPTION 1: Multiple Browser Windows (Recommended)
+1. Open your main browser window → http://localhost:8000
+2. Create a game and note the room code
+3. Open 7 incognito/private windows
+4. In each incognito window:
+   - Go to http://localhost:8000
+   - Join the game with the room code
+   - Enter a different player name (Player1, Player2, etc.)
+
+OPTION 2: Multiple Devices on Network
+1. On your computer: http://localhost:8000 → Create game
+2. On phones/tablets: http://10.0.0.59:8000 → Join game
+3. Use the same room code on all devices
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🤖 SIMULATING 8 PLAYERS:
+
+Unfortunately, I can't directly control browser windows or simulate
+clicking through the UI, but here's the manual process:
+
+1. YOU (Main Window):
+   - Create the game
+   - You'll be "Host"
+
+2. DUMMY PLAYERS (7 Incognito Windows):
+   Window 1: Join as "Alice"
+   Window 2: Join as "Bob"
+   Window 3: Join as "Charlie"
+   Window 4: Join as "Diana"
+   Window 5: Join as "Eve"
+   Window 6: Join as "Frank"
+   Window 7: Join as "Grace"
+
+3. START GAME:
+   - In your main window (as host)
+   - Configure roles if desired
+   - Click "Start Game"
+
+4. PLAY EACH ROLE:
+   - Switch between windows to play each character
+   - Follow the prompts for each role
+   - During discussion, switch windows to "discuss"
+   - Vote from each window
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ QUICK KEYBOARD SHORTCUTS:
+
+Mac:
+  Cmd+Shift+N = New Incognito Window
+  Cmd+Tab = Switch windows
+  Cmd+W = Close window
+
+Windows/Linux:
+  Ctrl+Shift+N = New Incognito Window
+  Alt+Tab = Switch windows
+  Ctrl+W = Close window
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛑 TO STOP THE SERVER:
+
+ps aux | grep "python3 -m http.server" | grep -v grep | awk '{print $2}' | xargs kill
+
+Or just close this terminal window.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Server Status: ✅ RUNNING
+Port: 8000
+Accessible from local network: YES
+
+Ready to play! 🎉
