@@ -84,21 +84,55 @@ let isAudioNode = false;
 // ==================== //
 
 let audioInitialized = false;
+let audioUnlocked = false;
 
 // Initialize audio for iOS - requires user interaction
 function initializeAudio() {
     if (audioInitialized) return;
 
     try {
-        // iOS requires this to be called from user interaction
-        const utterance = new SpeechSynthesisUtterance('');
-        utterance.volume = 0;  // Silent test
-        speechSynthesis.speak(utterance);
-        audioInitialized = true;
-        console.log('🎙️ Audio initialized for iOS');
+        console.log('🎙️ Initializing audio for iOS...');
+
+        // iOS requires a real utterance with sound to unlock audio
+        const utterance = new SpeechSynthesisUtterance('Audio ready');
+        utterance.volume = 1.0;
+        utterance.rate = 10; // Very fast so it's barely noticeable
+        utterance.lang = 'en-US';
+
+        // Set up event listeners
+        utterance.onstart = () => {
+            console.log('🎙️ Audio initialization started');
+            audioUnlocked = true;
+        };
+
+        utterance.onend = () => {
+            console.log('🎙️ Audio unlocked successfully');
+            audioInitialized = true;
+        };
+
+        utterance.onerror = (error) => {
+            console.warn('Audio initialization error:', error);
+        };
+
+        // Cancel any existing speech first
+        speechSynthesis.cancel();
+
+        // Wait a moment for cancel to complete, then speak
+        setTimeout(() => {
+            speechSynthesis.speak(utterance);
+        }, 50);
+
     } catch (error) {
         console.warn('Audio initialization failed:', error);
     }
+}
+
+// Global tap handler to unlock audio on iOS
+function unlockAudioOnInteraction() {
+    if (!isAudioNode || audioInitialized) return;
+
+    console.log('🎙️ User interaction detected, unlocking audio...');
+    initializeAudio();
 }
 
 function playNarration(text) {
@@ -116,24 +150,41 @@ function playNarration(text) {
         // Cancel any ongoing speech
         speechSynthesis.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.pitch = 0.8;  // Lower pitch for authority
-        utterance.rate = 0.9;   // Slower for dramatic effect
-        utterance.volume = 1.0;
-        utterance.lang = 'en-US';
-
-        // iOS-specific: Resume speech synthesis
-        if (speechSynthesis.paused) {
-            speechSynthesis.resume();
-        }
-
-        speechSynthesis.speak(utterance);
-
-        // For iOS: Force resume after a short delay
+        // Wait a moment for cancel to complete
         setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.pitch = 0.8;  // Lower pitch for authority
+            utterance.rate = 0.9;   // Slower for dramatic effect
+            utterance.volume = 1.0;
+            utterance.lang = 'en-US';
+
+            // Set up event handlers for debugging
+            utterance.onstart = () => {
+                console.log('🎙️ Speech started:', text.substring(0, 30));
+            };
+
+            utterance.onend = () => {
+                console.log('🎙️ Speech ended');
+            };
+
+            utterance.onerror = (error) => {
+                console.error('🎙️ Speech error:', error);
+            };
+
+            // iOS-specific: Resume speech synthesis if paused
             if (speechSynthesis.paused) {
                 speechSynthesis.resume();
             }
+
+            speechSynthesis.speak(utterance);
+
+            // For iOS: Force resume after a short delay (iOS sometimes pauses)
+            setTimeout(() => {
+                if (speechSynthesis.paused) {
+                    console.log('🎙️ Forcing resume for iOS');
+                    speechSynthesis.resume();
+                }
+            }, 100);
         }, 100);
     } catch (error) {
         console.error('Audio playback failed:', error);
@@ -280,8 +331,19 @@ function showYourCard() {
     yourCardSection.classList.remove('hidden');
 
     // Initialize audio on first user interaction (iOS requirement)
-    if (isAudioNode) {
-        initializeAudio();
+    if (isAudioNode && !audioInitialized) {
+        // Show a message prompting user to tap to enable audio
+        showMessage('Tap anywhere to enable audio narration', 'info');
+
+        // Add one-time click handler to unlock audio
+        const unlockHandler = () => {
+            initializeAudio();
+            document.body.removeEventListener('click', unlockHandler);
+            document.body.removeEventListener('touchstart', unlockHandler);
+        };
+
+        document.body.addEventListener('click', unlockHandler, { once: true });
+        document.body.addEventListener('touchstart', unlockHandler, { once: true });
     }
 
     showMessage('Memorize your role!', 'info');
@@ -1188,6 +1250,12 @@ function init() {
 
     if (!loadSession()) {
         return;
+    }
+
+    // Add global touch/click listener for iOS audio unlock
+    if (isAudioNode) {
+        document.body.addEventListener('touchstart', unlockAudioOnInteraction, { once: true });
+        document.body.addEventListener('click', unlockAudioOnInteraction, { once: true });
     }
 
     // Start the game
