@@ -85,50 +85,114 @@ let isAudioNode = false;
 
 let audioInitialized = false;
 let audioUnlocked = false;
+let audioButton = null;
+
+// Detect if running on iOS
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Detect Chrome on iOS
+function isChromeIOS() {
+    return isIOS() && /CriOS/.test(navigator.userAgent);
+}
 
 // Initialize audio for iOS - requires user interaction
 function initializeAudio() {
     if (audioInitialized) return;
 
+    // Check if speechSynthesis is available
+    if (!window.speechSynthesis) {
+        console.error('🎙️ Speech Synthesis not supported in this browser');
+        showMessage('Audio narrator not supported on this browser', 'error');
+        return;
+    }
+
     try {
-        console.log('🎙️ Initializing audio for iOS...');
+        console.log('🎙️ Initializing audio...', {
+            isIOS: isIOS(),
+            isChromeIOS: isChromeIOS(),
+            userAgent: navigator.userAgent
+        });
 
-        // iOS requires a real utterance with sound to unlock audio
-        const utterance = new SpeechSynthesisUtterance('Audio ready');
-        utterance.volume = 1.0;
-        utterance.rate = 10; // Very fast so it's barely noticeable
-        utterance.lang = 'en-US';
+        // For Chrome iOS, we need immediate execution without setTimeout
+        const initSpeech = () => {
+            // Cancel any existing speech first
+            speechSynthesis.cancel();
 
-        // Set up event listeners
-        utterance.onstart = () => {
-            console.log('🎙️ Audio initialization started');
-            audioUnlocked = true;
-        };
+            // iOS requires a real utterance with sound to unlock audio
+            const utterance = new SpeechSynthesisUtterance('Ready');
+            utterance.volume = 0.5;
+            utterance.rate = 10; // Very fast
+            utterance.lang = 'en-US';
 
-        utterance.onend = () => {
-            console.log('🎙️ Audio unlocked successfully');
-            audioInitialized = true;
-        };
+            // Set up event listeners
+            utterance.onstart = () => {
+                console.log('🎙️ Audio initialization started');
+                audioUnlocked = true;
+            };
 
-        utterance.onerror = (error) => {
-            console.warn('Audio initialization error:', error);
-        };
+            utterance.onend = () => {
+                console.log('🎙️ Audio unlocked successfully');
+                audioInitialized = true;
+                hideAudioButton();
+                showMessage('Audio enabled!', 'success');
+            };
 
-        // Cancel any existing speech first
-        speechSynthesis.cancel();
+            utterance.onerror = (error) => {
+                console.warn('Audio initialization error:', error);
+                // Still mark as initialized to prevent loops
+                audioInitialized = true;
+            };
 
-        // Wait a moment for cancel to complete, then speak
-        setTimeout(() => {
             speechSynthesis.speak(utterance);
-        }, 50);
+        };
+
+        // For Chrome iOS, execute immediately
+        // For Safari iOS, can use small delay
+        if (isChromeIOS()) {
+            initSpeech();
+        } else {
+            setTimeout(initSpeech, 50);
+        }
 
     } catch (error) {
         console.warn('Audio initialization failed:', error);
+        audioInitialized = true; // Prevent retries
+    }
+}
+
+// Show a visible button to enable audio
+function showAudioButton() {
+    if (audioButton) return;
+
+    audioButton = document.createElement('button');
+    audioButton.id = 'enableAudioBtn';
+    audioButton.className = 'enable-audio-button';
+    audioButton.innerHTML = '🔊 Enable Audio Narrator';
+
+    audioButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎙️ Audio button clicked');
+        initializeAudio();
+    });
+
+    document.body.appendChild(audioButton);
+    console.log('🎙️ Audio button added to page');
+}
+
+function hideAudioButton() {
+    if (audioButton) {
+        audioButton.remove();
+        audioButton = null;
+        console.log('🎙️ Audio button removed');
     }
 }
 
 // Global tap handler to unlock audio on iOS
-function unlockAudioOnInteraction() {
+function unlockAudioOnInteraction(event) {
     if (!isAudioNode || audioInitialized) return;
 
     console.log('🎙️ User interaction detected, unlocking audio...');
@@ -330,20 +394,10 @@ function showYourCard() {
 
     yourCardSection.classList.remove('hidden');
 
-    // Initialize audio on first user interaction (iOS requirement)
-    if (isAudioNode && !audioInitialized) {
-        // Show a message prompting user to tap to enable audio
-        showMessage('Tap anywhere to enable audio narration', 'info');
-
-        // Add one-time click handler to unlock audio
-        const unlockHandler = () => {
-            initializeAudio();
-            document.body.removeEventListener('click', unlockHandler);
-            document.body.removeEventListener('touchstart', unlockHandler);
-        };
-
-        document.body.addEventListener('click', unlockHandler, { once: true });
-        document.body.addEventListener('touchstart', unlockHandler, { once: true });
+    // Show audio enable button for iOS users who are the audio node
+    if (isAudioNode && !audioInitialized && isIOS()) {
+        showAudioButton();
+        showMessage('👆 Click the button to enable audio!', 'info');
     }
 
     showMessage('Memorize your role!', 'info');
@@ -1252,10 +1306,10 @@ function init() {
         return;
     }
 
-    // Add global touch/click listener for iOS audio unlock
-    if (isAudioNode) {
-        document.body.addEventListener('touchstart', unlockAudioOnInteraction, { once: true });
-        document.body.addEventListener('click', unlockAudioOnInteraction, { once: true });
+    // For iOS, we'll use a visible button instead of background listeners
+    // This is more reliable, especially for Chrome on iOS
+    if (isAudioNode && isIOS()) {
+        console.log('🎙️ iOS detected, will show audio button when needed');
     }
 
     // Start the game
