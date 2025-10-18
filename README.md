@@ -17,7 +17,24 @@ A Jackbox-style multiplayer **One Night Ultimate Werewolf** game for the web. Pl
 
 ## 🚀 Quick Start
 
-### Option 1: 🐳 Docker (Easiest - Recommended for Production)
+### Option 1: ☁️ Deploy to Render (1-Click - Recommended)
+
+**Instant deployment to the cloud:**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/select-repo?type=web)
+
+1. Click the button above
+2. Connect your GitHub account
+3. Select this repository
+4. Render auto-detects settings from `render.yaml`
+5. Click "Create Web Service"
+6. **Your game is live in 3-5 minutes!** 🎉
+
+Free tier includes 750 hours/month - perfect for playing with friends!
+
+---
+
+### Option 2: 🐳 Docker (Local Testing)
 
 Perfect for production deployment with one command:
 
