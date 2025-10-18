@@ -2,7 +2,7 @@
 // This file is updated automatically by GitHub Actions on each deployment
 
 export const VERSION = {
-    number: '1.0.0',
+    number: '1.0.1',
     commit: 'initial',
     date: new Date().toISOString().split('T')[0]
 };
