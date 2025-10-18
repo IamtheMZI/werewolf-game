@@ -113,109 +113,63 @@ function initializeAudio() {
         console.log('🎙️ Initializing audio...', {
             isIOS: isIOS(),
             isChromeIOS: isChromeIOS(),
-            userAgent: navigator.userAgent,
-            voices: speechSynthesis.getVoices().length
+            userAgent: navigator.userAgent
         });
 
-        // Wait for voices to load (important for Safari iOS)
-        const initSpeech = () => {
-            // Cancel any existing speech first
-            speechSynthesis.cancel();
+        // CRITICAL: Cancel first, then immediately speak
+        // NO setTimeout delays - must be synchronous with user interaction!
+        speechSynthesis.cancel();
 
-            // Small delay to ensure cancel completes
-            setTimeout(() => {
-                // Get available voices
-                const voices = speechSynthesis.getVoices();
-                console.log('🎙️ Available voices:', voices.length, voices.map(v => v.name));
+        // Get voices synchronously (iOS Safari loads them immediately)
+        const voices = speechSynthesis.getVoices();
+        console.log('🎙️ Available voices:', voices.length);
 
-                // iOS requires a real utterance with sound to unlock audio
-                const utterance = new SpeechSynthesisUtterance('Audio ready');
-                utterance.volume = 1.0;
-                utterance.rate = 2; // Fast but audible
-                utterance.pitch = 1.0;
-                utterance.lang = 'en-US';
+        // Create utterance - iOS requires actual audible speech to unlock
+        const utterance = new SpeechSynthesisUtterance('Audio ready');
+        utterance.volume = 1.0;
+        utterance.rate = 2; // Fast but audible
+        utterance.pitch = 1.0;
+        utterance.lang = 'en-US';
 
-                // Try to use a specific English voice if available
-                const englishVoice = voices.find(v => v.lang.startsWith('en-'));
-                if (englishVoice) {
-                    utterance.voice = englishVoice;
-                    console.log('🎙️ Using voice:', englishVoice.name);
-                }
+        // Set voice properties if available
+        const englishVoice = voices.find(v => v.lang.startsWith('en-'));
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+            utterance.voiceURI = englishVoice.voiceURI; // REQUIRED for mobile
+            utterance.lang = englishVoice.lang;
+            console.log('🎙️ Using voice:', englishVoice.name);
+        }
 
-                // Set up event listeners
-                utterance.onstart = () => {
-                    console.log('🎙️ Audio initialization started');
-                    audioUnlocked = true;
-                };
-
-                utterance.onend = () => {
-                    console.log('🎙️ Audio unlocked successfully');
-                    audioInitialized = true;
-                    hideAudioButton();
-                    showMessage('🔊 Audio enabled!', 'success');
-                };
-
-                utterance.onerror = (error) => {
-                    console.error('🎙️ Audio initialization error:', error);
-                    // Try once more without voice selection
-                    if (utterance.voice) {
-                        console.log('🎙️ Retrying without specific voice...');
-                        const retry = new SpeechSynthesisUtterance('Ready');
-                        retry.volume = 1.0;
-                        retry.rate = 2;
-                        retry.lang = 'en-US';
-                        retry.onend = () => {
-                            console.log('🎙️ Audio unlocked on retry');
-                            audioInitialized = true;
-                            hideAudioButton();
-                            showMessage('🔊 Audio enabled!', 'success');
-                        };
-                        speechSynthesis.speak(retry);
-                    } else {
-                        audioInitialized = true;
-                        hideAudioButton();
-                    }
-                };
-
-                // Speak the utterance
-                speechSynthesis.speak(utterance);
-
-                // For iOS: Sometimes we need to resume
-                setTimeout(() => {
-                    if (speechSynthesis.paused) {
-                        console.log('🎙️ Resuming paused speech');
-                        speechSynthesis.resume();
-                    }
-                }, 100);
-            }, 100);
+        // Set up event listeners
+        utterance.onstart = () => {
+            console.log('🎙️ Audio initialization started');
+            audioUnlocked = true;
         };
 
-        // Check if voices are already loaded
-        const voices = speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            console.log('🎙️ Voices already loaded, initializing...');
-            initSpeech();
-        } else {
-            // Wait for voices to load (Safari iOS requirement)
-            console.log('🎙️ Waiting for voices to load...');
-            speechSynthesis.addEventListener('voiceschanged', () => {
-                console.log('🎙️ Voices loaded, initializing...');
-                initSpeech();
-            }, { once: true });
+        utterance.onend = () => {
+            console.log('🎙️ Audio unlocked successfully');
+            audioInitialized = true;
+            hideAudioButton();
+            showMessage('🔊 Audio enabled!', 'success');
+        };
 
-            // Fallback timeout in case voiceschanged doesn't fire
+        utterance.onerror = (error) => {
+            console.error('🎙️ Audio initialization error:', error);
+            // Don't retry in onerror - may break user gesture context
+            showMessage('Audio init failed - please try again', 'error');
             setTimeout(() => {
-                if (!audioInitialized) {
-                    console.log('🎙️ Timeout reached, attempting init anyway...');
-                    initSpeech();
-                }
-            }, 1000);
-        }
+                hideAudioButton();
+                audioInitialized = false; // Allow retry
+            }, 2000);
+        };
+
+        // CRITICAL: Speak IMMEDIATELY - no setTimeout!
+        // This must be called synchronously from the button click
+        speechSynthesis.speak(utterance);
+        console.log('🎙️ Speak called immediately from user interaction');
 
     } catch (error) {
         console.error('🎙️ Audio initialization failed:', error);
-        audioInitialized = true; // Prevent retries
-        hideAudioButton();
         showMessage('Audio initialization failed', 'error');
     }
 }
@@ -278,54 +232,45 @@ function playNarration(text) {
         // Cancel any ongoing speech
         speechSynthesis.cancel();
 
-        // Wait a moment for cancel to complete
-        setTimeout(() => {
-            const voices = speechSynthesis.getVoices();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.pitch = 0.8;  // Lower pitch for authority
-            utterance.rate = 0.9;   // Slower for dramatic effect
-            utterance.volume = 1.0;
-            utterance.lang = 'en-US';
+        // Get voices
+        const voices = speechSynthesis.getVoices();
 
-            // Use the same voice selection as initialization
-            const englishVoice = voices.find(v => v.lang.startsWith('en-'));
-            if (englishVoice) {
-                utterance.voice = englishVoice;
+        // Create utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.pitch = 0.8;  // Lower pitch for authority
+        utterance.rate = 0.9;   // Slower for dramatic effect
+        utterance.volume = 1.0;
+        utterance.lang = 'en-US';
+
+        // Use the same voice selection as initialization
+        const englishVoice = voices.find(v => v.lang.startsWith('en-'));
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+            utterance.voiceURI = englishVoice.voiceURI; // REQUIRED for mobile
+            utterance.lang = englishVoice.lang;
+        }
+
+        // Set up event handlers for debugging
+        utterance.onstart = () => {
+            console.log('🎙️ Speech started:', text.substring(0, 30));
+        };
+
+        utterance.onend = () => {
+            console.log('🎙️ Speech ended');
+        };
+
+        utterance.onerror = (error) => {
+            console.error('🎙️ Speech error:', error);
+            // On error, try to reinitialize
+            if (isIOS()) {
+                audioInitialized = false;
+                showAudioButton();
             }
+        };
 
-            // Set up event handlers for debugging
-            utterance.onstart = () => {
-                console.log('🎙️ Speech started:', text.substring(0, 30));
-            };
+        // Speak immediately - no setTimeout!
+        speechSynthesis.speak(utterance);
 
-            utterance.onend = () => {
-                console.log('🎙️ Speech ended');
-            };
-
-            utterance.onerror = (error) => {
-                console.error('🎙️ Speech error:', error);
-                // On error, try to reinitialize
-                if (isIOS()) {
-                    audioInitialized = false;
-                    showAudioButton();
-                }
-            };
-
-            // iOS-specific: Resume speech synthesis if paused
-            if (speechSynthesis.paused) {
-                speechSynthesis.resume();
-            }
-
-            speechSynthesis.speak(utterance);
-
-            // For iOS: Force resume after a short delay (iOS sometimes pauses)
-            setTimeout(() => {
-                if (speechSynthesis.paused) {
-                    console.log('🎙️ Forcing resume for iOS');
-                    speechSynthesis.resume();
-                }
-            }, 100);
-        }, 100);
     } catch (error) {
         console.error('Audio playback failed:', error);
         if (isIOS()) {
