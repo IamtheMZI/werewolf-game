@@ -2,8 +2,8 @@
 // This file is updated automatically by GitHub Actions on each deployment
 
 export const VERSION = {
-    number: '1.0.2',
-    commit: 'de4dc54a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e',
+    number: '1.0.3',
+    commit: '51beef5c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a',
     date: '2025-10-18'
 };
 
