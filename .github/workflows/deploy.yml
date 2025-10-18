@@ -1,4 +1,4 @@
-name: Update Version and Deploy
+name: Build Info
 
 on:
   push:
@@ -9,18 +9,12 @@ on:
       - 'LICENSE'
 
 jobs:
-  update-version:
+  build-info:
     runs-on: ubuntu-latest
-
-    # Skip if commit message contains [skip ci]
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get commit info
         id: commit
@@ -29,47 +23,12 @@ jobs:
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Update version.js
+      - name: Display build info
         run: |
-          cat > js/version.js << 'EOF'
-          // Auto-generated version file
-          // Last updated: ${{ steps.commit.outputs.date }}
-          // Commit: ${{ steps.commit.outputs.sha }}
-
-          export const VERSION = {
-              number: '1.0.0',
-              commit: '${{ steps.commit.outputs.sha }}',
-              date: '${{ steps.commit.outputs.date }}'
-          };
-
-          // Update version display on page load
-          document.addEventListener('DOMContentLoaded', () => {
-              const versionElements = document.querySelectorAll('#app-version');
-              const versionString = `${VERSION.number}-${VERSION.commit.substring(0, 7)}`;
-
-              versionElements.forEach(el => {
-                  el.textContent = versionString;
-                  el.title = `Built on ${VERSION.date} | Commit: ${VERSION.commit}`;
-              });
-          });
-          EOF
-
-      - name: Check for changes
-        id: changes
-        run: |
-          git diff --quiet js/version.js || echo "changed=true" >> $GITHUB_OUTPUT
-
-      - name: Commit version update
-        if: steps.changes.outputs.changed == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add js/version.js
-          git commit -m "chore: update version to ${{ steps.commit.outputs.short_sha }} [skip ci]"
-          git push
-
-      - name: Trigger Render deployment
-        run: |
-          echo "✅ Version updated! Render will auto-deploy via webhook."
+          echo "🚀 Deployment triggered!"
           echo "📦 Version: 1.0.0-${{ steps.commit.outputs.short_sha }}"
           echo "📅 Date: ${{ steps.commit.outputs.date }}"
+          echo "🔗 Commit: https://github.com/${{ github.repository }}/commit/${{ steps.commit.outputs.sha }}"
+          echo ""
+          echo "✅ Render will auto-deploy from this commit."
+          echo "🌐 Your app will be live at your Render URL in ~3-5 minutes!"
