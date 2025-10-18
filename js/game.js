@@ -113,53 +113,110 @@ function initializeAudio() {
         console.log('🎙️ Initializing audio...', {
             isIOS: isIOS(),
             isChromeIOS: isChromeIOS(),
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            voices: speechSynthesis.getVoices().length
         });
 
-        // For Chrome iOS, we need immediate execution without setTimeout
+        // Wait for voices to load (important for Safari iOS)
         const initSpeech = () => {
             // Cancel any existing speech first
             speechSynthesis.cancel();
 
-            // iOS requires a real utterance with sound to unlock audio
-            const utterance = new SpeechSynthesisUtterance('Ready');
-            utterance.volume = 0.5;
-            utterance.rate = 10; // Very fast
-            utterance.lang = 'en-US';
+            // Small delay to ensure cancel completes
+            setTimeout(() => {
+                // Get available voices
+                const voices = speechSynthesis.getVoices();
+                console.log('🎙️ Available voices:', voices.length, voices.map(v => v.name));
 
-            // Set up event listeners
-            utterance.onstart = () => {
-                console.log('🎙️ Audio initialization started');
-                audioUnlocked = true;
-            };
+                // iOS requires a real utterance with sound to unlock audio
+                const utterance = new SpeechSynthesisUtterance('Audio ready');
+                utterance.volume = 1.0;
+                utterance.rate = 2; // Fast but audible
+                utterance.pitch = 1.0;
+                utterance.lang = 'en-US';
 
-            utterance.onend = () => {
-                console.log('🎙️ Audio unlocked successfully');
-                audioInitialized = true;
-                hideAudioButton();
-                showMessage('Audio enabled!', 'success');
-            };
+                // Try to use a specific English voice if available
+                const englishVoice = voices.find(v => v.lang.startsWith('en-'));
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                    console.log('🎙️ Using voice:', englishVoice.name);
+                }
 
-            utterance.onerror = (error) => {
-                console.warn('Audio initialization error:', error);
-                // Still mark as initialized to prevent loops
-                audioInitialized = true;
-            };
+                // Set up event listeners
+                utterance.onstart = () => {
+                    console.log('🎙️ Audio initialization started');
+                    audioUnlocked = true;
+                };
 
-            speechSynthesis.speak(utterance);
+                utterance.onend = () => {
+                    console.log('🎙️ Audio unlocked successfully');
+                    audioInitialized = true;
+                    hideAudioButton();
+                    showMessage('🔊 Audio enabled!', 'success');
+                };
+
+                utterance.onerror = (error) => {
+                    console.error('🎙️ Audio initialization error:', error);
+                    // Try once more without voice selection
+                    if (utterance.voice) {
+                        console.log('🎙️ Retrying without specific voice...');
+                        const retry = new SpeechSynthesisUtterance('Ready');
+                        retry.volume = 1.0;
+                        retry.rate = 2;
+                        retry.lang = 'en-US';
+                        retry.onend = () => {
+                            console.log('🎙️ Audio unlocked on retry');
+                            audioInitialized = true;
+                            hideAudioButton();
+                            showMessage('🔊 Audio enabled!', 'success');
+                        };
+                        speechSynthesis.speak(retry);
+                    } else {
+                        audioInitialized = true;
+                        hideAudioButton();
+                    }
+                };
+
+                // Speak the utterance
+                speechSynthesis.speak(utterance);
+
+                // For iOS: Sometimes we need to resume
+                setTimeout(() => {
+                    if (speechSynthesis.paused) {
+                        console.log('🎙️ Resuming paused speech');
+                        speechSynthesis.resume();
+                    }
+                }, 100);
+            }, 100);
         };
 
-        // For Chrome iOS, execute immediately
-        // For Safari iOS, can use small delay
-        if (isChromeIOS()) {
+        // Check if voices are already loaded
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            console.log('🎙️ Voices already loaded, initializing...');
             initSpeech();
         } else {
-            setTimeout(initSpeech, 50);
+            // Wait for voices to load (Safari iOS requirement)
+            console.log('🎙️ Waiting for voices to load...');
+            speechSynthesis.addEventListener('voiceschanged', () => {
+                console.log('🎙️ Voices loaded, initializing...');
+                initSpeech();
+            }, { once: true });
+
+            // Fallback timeout in case voiceschanged doesn't fire
+            setTimeout(() => {
+                if (!audioInitialized) {
+                    console.log('🎙️ Timeout reached, attempting init anyway...');
+                    initSpeech();
+                }
+            }, 1000);
         }
 
     } catch (error) {
-        console.warn('Audio initialization failed:', error);
+        console.error('🎙️ Audio initialization failed:', error);
         audioInitialized = true; // Prevent retries
+        hideAudioButton();
+        showMessage('Audio initialization failed', 'error');
     }
 }
 
@@ -207,6 +264,13 @@ function playNarration(text) {
     const audioNodeId = currentSession.settings?.audioNodeId;
     if (!audioNodeId) return;
 
+    // If audio not initialized yet, show button
+    if (!audioInitialized && isIOS()) {
+        console.log('🎙️ Audio not initialized, showing button');
+        showAudioButton();
+        return;
+    }
+
     console.log('🎙️ Narrating:', text);
 
     // Use Web Speech API
@@ -216,11 +280,18 @@ function playNarration(text) {
 
         // Wait a moment for cancel to complete
         setTimeout(() => {
+            const voices = speechSynthesis.getVoices();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.pitch = 0.8;  // Lower pitch for authority
             utterance.rate = 0.9;   // Slower for dramatic effect
             utterance.volume = 1.0;
             utterance.lang = 'en-US';
+
+            // Use the same voice selection as initialization
+            const englishVoice = voices.find(v => v.lang.startsWith('en-'));
+            if (englishVoice) {
+                utterance.voice = englishVoice;
+            }
 
             // Set up event handlers for debugging
             utterance.onstart = () => {
@@ -233,6 +304,11 @@ function playNarration(text) {
 
             utterance.onerror = (error) => {
                 console.error('🎙️ Speech error:', error);
+                // On error, try to reinitialize
+                if (isIOS()) {
+                    audioInitialized = false;
+                    showAudioButton();
+                }
             };
 
             // iOS-specific: Resume speech synthesis if paused
@@ -252,6 +328,10 @@ function playNarration(text) {
         }, 100);
     } catch (error) {
         console.error('Audio playback failed:', error);
+        if (isIOS()) {
+            audioInitialized = false;
+            showAudioButton();
+        }
     }
 }
 
