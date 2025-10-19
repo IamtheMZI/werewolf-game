@@ -54,6 +54,7 @@ const totalVotes = document.getElementById('totalVotes');
 
 // Results elements
 const eliminatedPlayer = document.getElementById('eliminatedPlayer');
+const votingBreakdown = document.getElementById('votingBreakdown');
 const finalRolesGrid = document.getElementById('finalRolesGrid');
 const winnerAnnouncement = document.getElementById('winnerAnnouncement');
 
@@ -1244,6 +1245,7 @@ function showResults() {
     resultsSection.classList.remove('hidden');
 
     displayEliminatedPlayers();
+    displayVotingBreakdown();
     displayFinalRoles();
     determineWinners();
 }
@@ -1266,6 +1268,60 @@ function displayEliminatedPlayers() {
             `).join('')}
         `;
     }
+}
+
+function displayVotingBreakdown() {
+    votingBreakdown.innerHTML = '';
+
+    // Create voting breakdown display
+    let votingHTML = '<h3>🗳️ Voting Results</h3>';
+    votingHTML += '<div class="voting-details">';
+
+    // Group votes by who was voted for
+    const votesByTarget = {};
+    currentSession.players.forEach(player => {
+        if (player.vote) {
+            if (!votesByTarget[player.vote]) {
+                votesByTarget[player.vote] = [];
+            }
+            votesByTarget[player.vote].push(player);
+        }
+    });
+
+    // Display each player and who voted for them
+    currentSession.players.forEach(player => {
+        const voters = votesByTarget[player.id] || [];
+        const voteCount = voters.length;
+
+        votingHTML += `
+            <div class="vote-row" style="margin: 15px 0; padding: 15px;
+                                         background: ${voteCount > 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f5f7fa'};
+                                         border-radius: 10px;
+                                         ${voteCount > 0 ? 'color: white;' : 'color: #2d3436;'}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="font-size: 1.1em;">👤 ${escapeHtml(player.name)}</strong>
+                    <span style="background: rgba(255, 255, 255, ${voteCount > 0 ? '0.3' : '0.1'});
+                                 padding: 5px 15px;
+                                 border-radius: 20px;
+                                 font-weight: bold;">
+                        ${voteCount} vote${voteCount !== 1 ? 's' : ''}
+                    </span>
+                </div>
+                ${voters.length > 0 ? `
+                    <div style="font-size: 0.9em; margin-top: 8px; padding-left: 10px; border-left: 3px solid rgba(255, 255, 255, 0.5);">
+                        Voted by: ${voters.map(v => escapeHtml(v.name)).join(', ')}
+                    </div>
+                ` : `
+                    <div style="font-size: 0.9em; font-style: italic; opacity: 0.7;">
+                        No votes received
+                    </div>
+                `}
+            </div>
+        `;
+    });
+
+    votingHTML += '</div>';
+    votingBreakdown.innerHTML = votingHTML;
 }
 
 function displayFinalRoles() {
