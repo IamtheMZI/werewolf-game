@@ -629,23 +629,50 @@ async function handleMinionAction() {
     promptTitle.textContent = '😈 Minion Action';
     promptText.textContent = 'See who the werewolves are. They do not see you.';
 
+    // Show player cards grid
+    playerCardsGrid.classList.remove('hidden');
+
     const werewolves = currentSession.players.filter(p =>
         (p.originalRole === 'werewolf' || p.originalRole === 'dream-wolf')
     );
 
     if (werewolves.length === 0) {
-        promptText.textContent = 'There are no werewolves! All werewolf cards must be in the center.';
+        promptText.innerHTML = `
+            <p style="color: #e74c3c; font-weight: bold; font-size: 1.2em; margin-top: 20px;">
+                ⚠️ There are no werewolves!
+            </p>
+            <p style="margin-top: 10px;">
+                All werewolf cards must be in the center.
+            </p>
+        `;
         currentPlayer.nightNotes.push('😈 No Werewolves found (all in center).');
     } else {
-        displaySelectablePlayers(werewolves, false, (player) => {
-            showMessage(`${player.name} is a Werewolf!`, 'info');
-        });
+        // Create a visible box showing werewolf names
         const werewolfNames = werewolves.map(w => w.name).join(', ');
+
+        promptText.innerHTML = `
+            <div style="background: linear-gradient(135deg, #d63031 0%, #e17055 100%);
+                        color: white;
+                        padding: 20px;
+                        border-radius: 12px;
+                        margin-top: 20px;
+                        box-shadow: 0 4px 15px rgba(214, 48, 49, 0.3);">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.3em; color: white;">🐺 The Werewolves Are:</h3>
+                <div style="background: rgba(255, 255, 255, 0.2);
+                            padding: 15px;
+                            border-radius: 8px;
+                            font-size: 1.2em;
+                            font-weight: bold;">
+                    ${werewolves.map(w => `<div style="margin: 8px 0;">🐺 ${escapeHtml(w.name)}</div>`).join('')}
+                </div>
+            </div>
+        `;
+
         currentPlayer.nightNotes.push(`😈 Werewolves are: ${werewolfNames}`);
     }
 
-    // Auto-continue after 6 seconds
-    await wait(6000);
+    // Auto-continue after 8 seconds (give more time to read)
+    await wait(8000);
     await executeBotNightActions();
 }
 
