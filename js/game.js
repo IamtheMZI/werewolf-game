@@ -205,16 +205,17 @@ function hideAudioButton() {
 
 // Global tap handler to unlock audio on iOS
 function unlockAudioOnInteraction(event) {
-    if (audioInitialized) return;
+    if (!isAudioNode || audioInitialized) return;
 
     console.log('🎙️ User interaction detected, unlocking audio...');
     initializeAudio();
 }
 
 function playNarration(text) {
-    // All players now play audio - users can mute their devices manually
+    // All players play audio - isAudioNode is now always true
+    if (!isAudioNode) return;
 
-    // If audio not initialized yet, show button
+    // If audio not initialized yet on iOS, show button
     if (!audioInitialized && isIOS()) {
         console.log('🎙️ Audio not initialized, showing button');
         showAudioButton();
@@ -363,7 +364,9 @@ function loadSession() {
     roomCodeDisplay.textContent = `Room: ${currentSession.roomCode}`;
     playerCountDisplay.textContent = `Players: ${currentSession.players.length}`;
 
-    // All players now play audio narration
+    // All players now play audio narration - set everyone as audio node
+    const audioNodeId = currentSession.settings?.audioNodeId;
+    isAudioNode = true; // Enable audio for all players
     console.log('🎙️ Audio narration enabled for all players');
 
     return true;
@@ -418,8 +421,8 @@ function showYourCard() {
 
     yourCardSection.classList.remove('hidden');
 
-    // Show audio enable button for iOS users (all players now play audio)
-    if (!audioInitialized && isIOS()) {
+    // Show audio enable button for iOS users
+    if (isAudioNode && !audioInitialized && isIOS()) {
         showAudioButton();
         showMessage('👆 Click the button to enable audio!', 'info');
     }
@@ -1419,7 +1422,7 @@ function init() {
 
     // For iOS, we'll use a visible button instead of background listeners
     // This is more reliable, especially for Chrome on iOS
-    if (isIOS()) {
+    if (isAudioNode && isIOS()) {
         console.log('🎙️ iOS detected, will show audio button when needed');
     }
 
