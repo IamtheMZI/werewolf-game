@@ -205,19 +205,14 @@ function hideAudioButton() {
 
 // Global tap handler to unlock audio on iOS
 function unlockAudioOnInteraction(event) {
-    if (!isAudioNode || audioInitialized) return;
+    if (audioInitialized) return;
 
     console.log('🎙️ User interaction detected, unlocking audio...');
     initializeAudio();
 }
 
 function playNarration(text) {
-    // Only play if this player is the audio node
-    if (!isAudioNode) return;
-
-    // Check if audio is enabled
-    const audioNodeId = currentSession.settings?.audioNodeId;
-    if (!audioNodeId) return;
+    // All players now play audio - users can mute their devices manually
 
     // If audio not initialized yet, show button
     if (!audioInitialized && isIOS()) {
@@ -368,13 +363,8 @@ function loadSession() {
     roomCodeDisplay.textContent = `Room: ${currentSession.roomCode}`;
     playerCountDisplay.textContent = `Players: ${currentSession.players.length}`;
 
-    // Check if this player is the audio node
-    const audioNodeId = currentSession.settings?.audioNodeId;
-    isAudioNode = audioNodeId === currentPlayerId;
-
-    if (isAudioNode) {
-        console.log('🎙️ You are the audio node - you will hear narration');
-    }
+    // All players now play audio narration
+    console.log('🎙️ Audio narration enabled for all players');
 
     return true;
 }
@@ -428,8 +418,8 @@ function showYourCard() {
 
     yourCardSection.classList.remove('hidden');
 
-    // Show audio enable button for iOS users who are the audio node
-    if (isAudioNode && !audioInitialized && isIOS()) {
+    // Show audio enable button for iOS users (all players now play audio)
+    if (!audioInitialized && isIOS()) {
         showAudioButton();
         showMessage('👆 Click the button to enable audio!', 'info');
     }
@@ -1429,7 +1419,7 @@ function init() {
 
     // For iOS, we'll use a visible button instead of background listeners
     // This is more reliable, especially for Chrome on iOS
-    if (isAudioNode && isIOS()) {
+    if (isIOS()) {
         console.log('🎙️ iOS detected, will show audio button when needed');
     }
 
