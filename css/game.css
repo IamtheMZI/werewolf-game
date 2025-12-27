@@ -135,6 +135,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
 .card-emoji {
@@ -607,6 +616,18 @@
     font-weight: 700;
     font-size: 1.2em;
     margin-bottom: 10px;
+}
+
+.final-role-card .player-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+
+.final-role-card .player-icon img.final-role-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
 .final-role-card .role-name {

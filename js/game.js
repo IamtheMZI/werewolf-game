@@ -404,7 +404,15 @@ function showYourCard() {
 
     // Display card
     const cardFront = yourCard.querySelector('.card-front');
-    cardFront.querySelector('.card-emoji').textContent = role.emoji;
+    const cardImageContainer = cardFront.querySelector('.card-image');
+
+    // Display image if available, otherwise use emoji
+    if (role.image) {
+        cardImageContainer.innerHTML = `<img src="${role.image}" alt="${role.name}">`;
+    } else {
+        cardImageContainer.innerHTML = `<span class="card-emoji">${role.emoji}</span>`;
+    }
+
     cardFront.querySelector('.card-name').textContent = role.name;
     cardFront.querySelector('.card-team').textContent = getRoleTeamName(role.team);
 
@@ -1332,8 +1340,13 @@ function displayFinalRoles() {
         const card = document.createElement('div');
         card.className = 'final-role-card';
 
+        // Use image if available, otherwise fall back to emoji
+        const iconContent = role.image
+            ? `<img src="${role.image}" alt="${role.name}" class="final-role-image">`
+            : role.emoji;
+
         card.innerHTML = `
-            <div class="player-icon">${role.emoji}</div>
+            <div class="player-icon">${iconContent}</div>
             <div class="player-name">${escapeHtml(player.name)}</div>
             <div class="role-name" style="background: ${getRoleTeamColor(role.team)}">${role.name}</div>
         `;
