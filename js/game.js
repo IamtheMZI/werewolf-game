@@ -660,55 +660,126 @@ async function handleSeerAction() {
     console.log('🔮 handleSeerAction START');
 
     promptTitle.textContent = '🔮 Seer Action';
-    promptText.textContent = 'Choose: View ONE player card OR TWO center cards. You have 8 seconds.';
+    promptText.textContent = 'Tap ONE player card OR TWO center cards to view.';
 
     // Show both options
     playerCardsGrid.classList.remove('hidden');
     centerCardsSection.classList.remove('hidden');
 
-    // Display selectable players (excluding self)
+    // Display selectable players with immediate reveal on click
     const otherPlayers = currentSession.players.filter(p => p.id !== currentPlayerId);
-    displaySelectablePlayers(otherPlayers, true, null);
+    displaySeerPlayerCards(otherPlayers);
 
-    // Display center cards
-    displayCenterCards(true);
+    // Display center cards with immediate reveal on click
+    displaySeerCenterCards();
 
-    // Wait 8 seconds for user to select
-    console.log('⏳ Waiting 8 seconds for selection...');
+    // Wait 8 seconds for action to complete
     await wait(8000);
-    console.log('✅ 8 second wait complete');
 
-    // Check what was selected
-    console.log('Selected cards:', selectedCards);
-    if (selectedCards.length === 1 && selectedCards[0].type === 'player') {
-        // View player card
-        const player = currentSession.players.find(p => p.id === selectedCards[0].id);
-        const role = getRoleById(player.originalRole);
-        showMessage(`${player.name} is the ${role.name} ${role.emoji}`, 'success');
-        currentPlayer.nightNotes.push(`🔮 Viewed ${player.name}: ${role.name} ${role.emoji}`);
-    } else if (selectedCards.length === 2 && selectedCards[0].type === 'center') {
-        // View center cards
-        const notes = [];
-        selectedCards.forEach(card => {
-            const centerCard = currentSession.centerCards[card.position];
-            const role = getRoleById(centerCard.originalRole);
-            showMessage(`Center ${card.position + 1} is ${role.name} ${role.emoji}`, 'success');
-            notes.push(`Center ${card.position + 1}: ${role.name} ${role.emoji}`);
-        });
-        currentPlayer.nightNotes.push(`🔮 Viewed ${notes.join(', ')}`);
-    } else {
+    // If nothing was selected
+    if (currentPlayer.nightNotes.length === 0 || !currentPlayer.nightNotes.some(n => n.startsWith('🔮'))) {
         currentPlayer.nightNotes.push('🔮 Did not view any cards.');
     }
 
-    console.log('⏳ Waiting 2 seconds to show result...');
-    await wait(2000);
-    console.log('✅ 2 second wait complete');
-
-    console.log('⏳ Executing bot night actions...');
     await executeBotNightActions();
-    console.log('✅ Bot actions complete');
-
     console.log('🔮 handleSeerAction END');
+}
+
+// Seer-specific player card display with immediate reveal
+function displaySeerPlayerCards(players) {
+    playerCards.innerHTML = '';
+
+    players.forEach(player => {
+        const card = document.createElement('div');
+        card.className = 'player-card-interactive';
+        card.dataset.playerId = player.id;
+
+        card.innerHTML = `
+            <div class="player-icon">👤</div>
+            <div class="player-name">${escapeHtml(player.name)}</div>
+        `;
+
+        card.addEventListener('click', () => {
+            // Immediately reveal the role
+            const role = getRoleById(player.originalRole);
+
+            // Show the role on the card
+            card.innerHTML = `
+                <div class="player-icon" style="font-size: 2em;">${role.emoji}</div>
+                <div class="player-name">${escapeHtml(player.name)}</div>
+                <div class="player-role" style="font-weight: bold; color: #667eea;">${role.name}</div>
+            `;
+            card.classList.add('selected');
+            card.style.pointerEvents = 'none'; // Prevent re-clicking
+
+            // Show toast message
+            showMessage(`${player.name} is the ${role.name} ${role.emoji}`, 'success');
+            currentPlayer.nightNotes.push(`🔮 Viewed ${player.name}: ${role.name} ${role.emoji}`);
+
+            // Disable other cards
+            document.querySelectorAll('.player-card-interactive').forEach(c => {
+                if (c !== card) c.style.opacity = '0.5';
+                c.style.pointerEvents = 'none';
+            });
+            document.querySelectorAll('.center-card').forEach(c => {
+                c.style.opacity = '0.5';
+                c.style.pointerEvents = 'none';
+            });
+        });
+
+        playerCards.appendChild(card);
+    });
+}
+
+// Seer-specific center card display with immediate reveal
+function displaySeerCenterCards() {
+    const centerCardElements = document.querySelectorAll('.center-card');
+    let selectedCount = 0;
+    const revealedCards = [];
+
+    centerCardElements.forEach((cardEl, index) => {
+        cardEl.classList.remove('selected');
+
+        const newCardEl = cardEl.cloneNode(true);
+        cardEl.parentNode.replaceChild(newCardEl, cardEl);
+
+        newCardEl.addEventListener('click', () => {
+            if (selectedCount >= 2) return;
+
+            selectedCount++;
+            const centerCard = currentSession.centerCards[index];
+            const role = getRoleById(centerCard.originalRole);
+
+            // Reveal the center card
+            newCardEl.innerHTML = `
+                <div class="card-front" style="display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; height: 100%;">
+                    <div style="font-size: 3em;">${role.emoji}</div>
+                    <div style="font-weight: bold; margin-top: 10px;">${role.name}</div>
+                </div>
+            `;
+            newCardEl.classList.add('selected');
+
+            revealedCards.push(`Center ${index + 1}: ${role.name} ${role.emoji}`);
+            showMessage(`Center ${index + 1} is ${role.name} ${role.emoji}`, 'success');
+
+            // After 2 center cards selected, disable all
+            if (selectedCount >= 2) {
+                currentPlayer.nightNotes.push(`🔮 Viewed ${revealedCards.join(', ')}`);
+                document.querySelectorAll('.player-card-interactive').forEach(c => {
+                    c.style.opacity = '0.5';
+                    c.style.pointerEvents = 'none';
+                });
+            }
+
+            // If selecting center, disable player cards
+            if (selectedCount === 1) {
+                document.querySelectorAll('.player-card-interactive').forEach(c => {
+                    c.style.opacity = '0.5';
+                    c.style.pointerEvents = 'none';
+                });
+            }
+        });
+    });
 }
 
 async function handleRobberAction() {

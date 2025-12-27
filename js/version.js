@@ -1,6 +1,6 @@
 // Version configuration
 export const VERSION = {
-    number: '1.0.14',
+    number: '1.0.15',
     date: '2024-12-27'
 };
 
