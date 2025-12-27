@@ -5,10 +5,18 @@ export const VERSION = {
 };
 
 // Update version display on all pages
-// Modules are deferred, so DOM is ready when this runs
-const versionElements = document.querySelectorAll('#app-version');
-versionElements.forEach(el => {
-    if (el) {
-        el.textContent = VERSION.number;
-    }
-});
+function updateVersion() {
+    const versionElements = document.querySelectorAll('#app-version');
+    versionElements.forEach(el => {
+        if (el) {
+            el.textContent = VERSION.number;
+        }
+    });
+}
+
+// Run when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateVersion);
+} else {
+    updateVersion();
+}
