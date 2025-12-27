@@ -483,10 +483,16 @@ async function executeSequentialNightPhase() {
             continue;
         }
 
-        // Narrate role waking up with task description
+        // Narrate role waking up
+        playNarration(`${role.name}, wake up.`);
+        await wait(2500);
+
+        // Narrate the task description
         const taskDescription = getRoleTaskDescription(role.id);
-        playNarration(`${role.name}, wake up. ${taskDescription}`);
-        await wait(4000); // Give more time to hear the full instruction
+        if (taskDescription) {
+            playNarration(taskDescription);
+            await wait(5000); // Give time to hear the full instruction
+        }
 
         // Check if current player has this role
         const isMyTurn = playersWithRole.some(p => p.id === currentPlayerId);
