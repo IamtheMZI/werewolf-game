@@ -457,7 +457,7 @@ async function startNightPhase() {
 
     // Narrate night beginning
     playNarration('Night falls. Everyone close your eyes.');
-    await wait(2000);
+    await wait(4000);
 
     // Start sequential night actions
     executeSequentialNightPhase();
@@ -485,13 +485,13 @@ async function executeSequentialNightPhase() {
 
         // Narrate role waking up
         playNarration(`${role.name}, wake up.`);
-        await wait(2500);
+        await wait(4000);
 
         // Narrate the task description
         const taskDescription = getRoleTaskDescription(role.id);
         if (taskDescription) {
             playNarration(taskDescription);
-            await wait(5000); // Give time to hear the full instruction
+            await wait(7000); // Give time to hear the full instruction
         }
 
         // Check if current player has this role
@@ -516,7 +516,7 @@ async function executeSequentialNightPhase() {
 
         // Narrate role going back to sleep
         playNarration(`${role.name}, close your eyes.`);
-        await wait(1500);
+        await wait(4000);
     }
 
     console.log('✅ All night actions complete, moving to day phase');
@@ -999,7 +999,7 @@ async function startDayPhase() {
 
     // Narrate day beginning
     playNarration('Everyone, wake up! The sun has risen. It is time to discuss.');
-    await wait(2000);
+    await wait(5000);
 
     discussionSection.classList.remove('hidden');
 
@@ -1162,7 +1162,7 @@ async function startVoting() {
 
     // Narrate voting phase
     playNarration('Time to vote. Everyone, point to who you think is a werewolf.');
-    await wait(2000);
+    await wait(5000);
 
     votingSection.classList.remove('hidden');
 
