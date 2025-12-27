@@ -211,84 +211,28 @@ function unlockAudioOnInteraction(event) {
     initializeAudio();
 }
 
-function playNarration(text) {
+// Play pre-recorded audio file and return Promise when done
+function playAudioFile(audioKey) {
     return new Promise((resolve) => {
-        // All players play audio - isAudioNode is now always true
-        if (!isAudioNode) {
+        const audioPath = `audio/${audioKey}.mp3`;
+        console.log(`🎵 Playing: ${audioPath}`);
+
+        const audio = new Audio(audioPath);
+
+        audio.onended = () => {
+            console.log(`🎵 Finished: ${audioKey}`);
             resolve();
-            return;
-        }
+        };
 
-        // If audio not initialized yet on iOS, show button
-        if (!audioInitialized && isIOS()) {
-            console.log('🎙️ Audio not initialized, showing button');
-            showAudioButton();
+        audio.onerror = (e) => {
+            console.error(`🎵 Error playing ${audioKey}:`, e);
+            resolve(); // Resolve anyway to continue game
+        };
+
+        audio.play().catch(err => {
+            console.error('Audio play failed:', err);
             resolve();
-            return;
-        }
-
-        console.log('🎙️ Narrating:', text);
-
-        // Use Web Speech API
-        try {
-            // Wait for any ongoing speech to finish before starting new one
-            const checkAndSpeak = () => {
-                if (speechSynthesis.speaking) {
-                    setTimeout(checkAndSpeak, 100);
-                    return;
-                }
-
-                // Get voices
-                const voices = speechSynthesis.getVoices();
-
-                // Create utterance
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.pitch = 0.8;  // Lower pitch for authority
-                utterance.rate = 0.9;   // Slower for dramatic effect
-                utterance.volume = 1.0;
-                utterance.lang = 'en-US';
-
-                // Use the same voice selection as initialization
-                const englishVoice = voices.find(v => v.lang.startsWith('en-'));
-                if (englishVoice) {
-                    utterance.voice = englishVoice;
-                    utterance.voiceURI = englishVoice.voiceURI; // REQUIRED for mobile
-                    utterance.lang = englishVoice.lang;
-                }
-
-                // Set up event handlers
-                utterance.onstart = () => {
-                    console.log('🎙️ Speech started:', text.substring(0, 30));
-                };
-
-                utterance.onend = () => {
-                    console.log('🎙️ Speech ended');
-                    resolve(); // Resolve when speech finishes
-                };
-
-                utterance.onerror = (error) => {
-                    console.error('🎙️ Speech error:', error);
-                    if (isIOS()) {
-                        audioInitialized = false;
-                        showAudioButton();
-                    }
-                    resolve(); // Resolve on error too
-                };
-
-                // Speak
-                speechSynthesis.speak(utterance);
-            };
-
-            checkAndSpeak();
-
-        } catch (error) {
-            console.error('Audio playback failed:', error);
-            if (isIOS()) {
-                audioInitialized = false;
-                showAudioButton();
-            }
-            resolve();
-        }
+        });
     });
 }
 
@@ -471,8 +415,8 @@ async function startNightPhase() {
     currentPlayer.nightNotes = [];
 
     // Narrate night beginning
-    await playNarration('Night falls. Everyone close your eyes.');
-    await wait(2000); // Extra pause after narration
+    await playAudioFile('night_falls');
+    await wait(1000); // Brief pause
 
     // Start sequential night actions
     executeSequentialNightPhase();
@@ -499,15 +443,12 @@ async function executeSequentialNightPhase() {
         }
 
         // Narrate role waking up
-        await playNarration(`${role.name}, wake up.`);
-        await wait(1000); // Brief pause
+        await playAudioFile(`${role.id}_wake`);
+        await wait(500); // Brief pause
 
         // Narrate the task description
-        const taskDescription = getRoleTaskDescription(role.id);
-        if (taskDescription) {
-            await playNarration(taskDescription);
-            await wait(2000); // Extra pause to process instructions
-        }
+        await playAudioFile(`${role.id}_task`);
+        await wait(1000); // Pause to process instructions
 
         // Check if current player has this role
         const isMyTurn = playersWithRole.some(p => p.id === currentPlayerId);
@@ -530,8 +471,8 @@ async function executeSequentialNightPhase() {
         }
 
         // Narrate role going back to sleep
-        await playNarration(`${role.name}, close your eyes.`);
-        await wait(2000); // Pause before next role
+        await playAudioFile(`${role.id}_sleep`);
+        await wait(1000); // Pause before next role
     }
 
     console.log('✅ All night actions complete, moving to day phase');
@@ -1013,8 +954,8 @@ async function startDayPhase() {
     phaseTitle.textContent = 'Day Phase - Discussion';
 
     // Narrate day beginning
-    await playNarration('Everyone, wake up! The sun has risen. It is time to discuss.');
-    await wait(2000);
+    await playAudioFile('everyone_wake');
+    await wait(1000);
 
     discussionSection.classList.remove('hidden');
 
@@ -1176,8 +1117,8 @@ async function startVoting() {
     phaseTitle.textContent = 'Voting Time';
 
     // Narrate voting phase
-    await playNarration('Time to vote. Everyone, point to who you think is a werewolf.');
-    await wait(2000);
+    await playAudioFile('time_to_vote');
+    await wait(1000);
 
     votingSection.classList.remove('hidden');
 
