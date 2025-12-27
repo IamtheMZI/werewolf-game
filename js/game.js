@@ -281,6 +281,21 @@ async function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Get the task description for narration
+function getRoleTaskDescription(roleId) {
+    const descriptions = {
+        'mason': 'Look for other Masons. If you are alone, there is a Mason card in the center.',
+        'werewolf': 'Look for other Werewolves. If you are the only Werewolf, you may look at one center card.',
+        'minion': 'Look at who the Werewolves are. They do not know who you are. You win if they survive.',
+        'seer': 'You may look at one other player\'s card, or look at two cards from the center.',
+        'robber': 'You may swap your card with another player\'s card. Then look at your new card.',
+        'troublemaker': 'You may swap the cards of two other players. They will not know their cards were swapped.',
+        'drunk': 'You must swap your card with one card from the center. You may not look at your new card.',
+        'insomniac': 'Look at your card to see if it has changed during the night.'
+    };
+    return descriptions[roleId] || '';
+}
+
 // ==================== //
 // UTILITY FUNCTIONS    //
 // ==================== //
@@ -468,9 +483,10 @@ async function executeSequentialNightPhase() {
             continue;
         }
 
-        // Narrate role waking up
-        playNarration(`${role.name}, wake up.`);
-        await wait(1500);
+        // Narrate role waking up with task description
+        const taskDescription = getRoleTaskDescription(role.id);
+        playNarration(`${role.name}, wake up. ${taskDescription}`);
+        await wait(4000); // Give more time to hear the full instruction
 
         // Check if current player has this role
         const isMyTurn = playersWithRole.some(p => p.id === currentPlayerId);
